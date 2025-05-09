@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>To Doリスト</title>
+  <style>
+    /* 全体 */
+    body {
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+      max-width: 640px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      color: #d1c4e9; /* 薄いパステル紫 */
+    }
+    h2 {
+      font-size: 1.25rem;
+      margin: 1rem 0;
+      color: #d1c4e9; /* 薄いパステル紫 */
+    }
+
+    /* コンテナ */
+    .list-container {
+      background: #fff;
+      padding: 1rem 1.25rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      margin-bottom: 1.5rem;
+    }
+    .list-container ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    /* 入力エリア */
+    .input-group {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    input, select, button {
+      font-size: 1rem;
+    }
+    #taskInput,
+    #configName,
+    #configValue {
+      flex: 1;
+      padding: 0.75rem;
+      border: 1px solid #ccd6dd;
+      border-radius: 4px;
+      transition: border-color 0.2s;
+    }
+    #taskInput:focus,
+    #configName:focus,
+    #configValue:focus {
+      outline: none;
+      border-color: #d1c4e9; /* フォーカス時薄い紫 */
+    }
+    #addButton,
+    #addConfigButton {
+      padding: 0.75rem 1.25rem;
+      background: #d1c4e9; /* 薄いパステル紫 */
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+    #addButton:hover,
+    #addConfigButton:hover {
+      background: #b39ddb; /* ほんの少し濃い紫 */
+    }
+    select {
+      padding: 0.75rem;
+      border: 1px solid #ccd6dd;
+      border-radius: 4px;
+    }
+
+    /* 曜日選択 */
+    #weeklyValue {
+      display: none;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+    }
+    #weeklyValue label {
+      display: flex;
+      align-items: center;
+      background: #ede7f6; /* さらに薄い紫背景 */
+      padding: 0.5rem 0.75rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #weeklyValue label:hover {
+      background: #d1c4e9; /* 薄いパステル紫 */
+    }
+    #weeklyValue input {
+      margin-right: 0.5rem;
+    }
+
+    /* 設定リスト */
+    #configList li,
+    .list-container li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: #fff;
+      margin: 0.5rem 0;
+      padding: 0.75rem;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: background 0.2s;
+    }
+
+    /* タスクリスト */
+    .list-container li.completed {
+      background: #e6faed;
+    }
+    .task-text {
+      flex: 1;
+      margin-right: 1rem;
+      word-break: break-word;
+    }
+
+    /* ボタン */
+    .btn {
+      border: none;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: opacity 0.2s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+    .complete-btn {
+      background: #81c784; /* 薄いグリーン */
+      color: #fff;
+    }
+    .delete-btn {
+      background: #e57373; /* 薄いレッド */
+      color: #fff;
+    }
+    .manual-delete-btn {
+      background: #6c757d;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>To Doリスト</h1>
+
+  <!-- 自動追加設定 -->
+  <div class="list-container">
+    <h2>自動追加設定</h2>
+    <form id="configForm">
+      <div class="input-group">
+        <input id="configName" type="text" placeholder="タスク名" required>
+        <select id="configType">
+          <option value="interval">間隔(分)</option>
+          <option value="daily">毎日(時刻)</option>
+          <option value="weekly">毎週(曜日)</option>
+          <option value="monthly">毎月(日付)</option>
+        </select>
+        <input id="configValue" type="text" placeholder="間隔(分)を入力">
+        <button type="submit" id="addConfigButton">設定追加</button>
+      </div>
+      <div id="weeklyValue">
+        <label><input type="checkbox" value="日">日</label>
+        <label><input type="checkbox" value="月">月</label>
+        <label><input type="checkbox" value="火">火</label>
+        <label><input type="checkbox" value="水">水</label>
+        <label><input type="checkbox" value="木">木</label>
+        <label><input type="checkbox" value="金">金</label>
+        <label><input type="checkbox" value="土">土</label>
+      </div>
+    </form>
+    <ul id="configList"></ul>
+  </div>
+
+  <!-- タスク追加 -->
+  <div class="list-container">
+    <h2>タスク追加</h2>
+    <div class="input-group">
+      <input id="taskInput" type="text" placeholder="タスクを手動追加">
+      <button id="addButton">追加</button>
+    </div>
+  </div>
+
+  <!-- 未完了タスク -->
+  <div class="list-container">
+    <h2>未完了タスク</h2>
+    <ul id="todoList"></ul>
+  </div>
+
+  <!-- 完了済みタスク -->
+  <div class="list-container">
+    <h2>完了済みタスク</h2>
+    <ul id="completedList"></ul>
+  </div>
+
+  <script>
+    // 自動削除の範囲: 1分〜24時間ランダム
+    const MIN_DELETE_DELAY = 60000;
+    const MAX_DELETE_DELAY = 86400000;
+
+    const taskInput = document.getElementById('taskInput');
+    const addButton = document.getElementById('addButton');
+    const todoList = document.getElementById('todoList');
+    const completedList = document.getElementById('completedList');
+
+    // 設定フォーム要素
+    const configForm = document.getElementById('configForm');
+    const configNameInput = document.getElementById('configName');
+    const configTypeSelect = document.getElementById('configType');
+    const configValueInput = document.getElementById('configValue');
+    const weeklyValueDiv = document.getElementById('weeklyValue');
+    const configListElem = document.getElementById('configList');
+
+    const configs = [];
+
+    // 初期設定
+    updateConfigInputs();
+    configTypeSelect.addEventListener('change', updateConfigInputs);
+    configForm.addEventListener('submit', e => { e.preventDefault(); addConfig(); });
+
+    // 手動タスク追加
+    addButton.addEventListener('click', () => {
+      const text = taskInput.value.trim(); if (!text) return;
+      const li = createTaskItem(text);
+      todoList.appendChild(li);
+      taskInput.value = '';
+      scheduleAutoDelete(li);
+    });
+    taskInput.addEventListener('keypress', e => e.key==='Enter' && addButton.click());
+
+    function updateConfigInputs() {
+      const type = configTypeSelect.value;
+      configValueInput.style.display = (type==='weekly'? 'none':'block');
+      weeklyValueDiv.style.display = (type==='weekly'? 'flex':'none');
+      configValueInput.required = (type==='weekly'? false:true);
+      switch(type) {
+        case 'interval': configValueInput.type='number'; configValueInput.placeholder='間隔(分)を入力'; break;
+        case 'daily':    configValueInput.type='time';   configValueInput.placeholder='時刻(例 09:00)'; break;
+        case 'monthly':  configValueInput.type='number'; configValueInput.placeholder='日付(1-31)'; break;
+      }
+    }
+
+    function addConfig() {
+      const name = configNameInput.value.trim(); const type = configTypeSelect.value;
+      let value;
+      if (type==='weekly') {
+        const checked = Array.from(weeklyValueDiv.querySelectorAll('input[type=checkbox]'))
+          .filter(cb=>cb.checked).map(cb=>cb.value);
+        if (checked.length===0) return;
+        value = checked;
+      } else {
+        if (!configValueInput.value) return;
+        value = configValueInput.value;
+      }
+      // 重複チェック
+      if (configs.some(c=>c.name===name && c.type===type && JSON.stringify(c.value)===JSON.stringify(value))) return;
+      const config = { id: Date.now(), name, type, value };
+      configs.push(config);
+      renderConfigs(); scheduleConfig(config);
+      configNameInput.value=''; configValueInput.value='';
+      weeklyValueDiv.querySelectorAll('input').forEach(cb=>cb.checked=false);
+    }
+
+    function renderConfigs() {
+      configListElem.innerHTML='';
+      configs.forEach(c=>{
+        const li = document.createElement('li');
+        const desc = c.type==='weekly'? c.value.join(',') : c.value;
+        li.textContent = `${c.name} (${c.type}:${desc})`;
+        const btn=document.createElement('button'); btn.className='btn manual-delete-btn'; btn.textContent='削除';
+        btn.addEventListener('click', ()=>removeConfig(c.id));
+        li.appendChild(btn); configListElem.appendChild(li);
+      });
+    }
+
+    function removeConfig(id) {
+      const idx = configs.findIndex(c=>c.id===id);
+      if (idx>=0) configs.splice(idx,1);
+      renderConfigs();
+    }
+
+    function createTaskItem(text) {
+      const li=document.createElement('li');
+      const span=document.createElement('span'); span.className='task-text'; span.textContent=text;
+      const completeBtn=document.createElement('button'); completeBtn.className='btn complete-btn'; completeBtn.textContent='完了';
+      completeBtn.addEventListener('click',()=>moveTask(li,completedList,'completed'));
+      const deleteBtn=document.createElement('button'); deleteBtn.className='btn delete-btn'; deleteBtn.textContent='削除';
+      deleteBtn.addEventListener('click',()=>li.remove());
+      li.append(span,completeBtn,deleteBtn);
+      return li;
+    }
+
+    function moveTask(li, targetList, statusClass) {
+      if (li._timer) clearTimeout(li._timer);
+      li.remove(); li.classList.add(statusClass);
+      li.querySelectorAll('button').forEach(b=>b.remove());
+      const manualDel=document.createElement('button'); manualDel.className='btn manual-delete-btn'; manualDel.textContent='×'; manualDel.title='手動削除'; manualDel.addEventListener('click',()=>li.remove());
+      li.appendChild(manualDel); targetList.appendChild(li);
+    }
+
+    function scheduleAutoDelete(li) {
+      const delay=Math.random()*(MAX_DELETE_DELAY-MIN_DELETE_DELAY)+MIN_DELETE_DELAY;
+      li._timer=setTimeout(()=>li.remove(),delay);
+    }
+
+    function scheduleConfig(c) {
+      const now=new Date(); let next;
+      if (c.type==='interval') {
+        next=new Date(now.getTime()+parseInt(c.value)*60000);
+      } else if (c.type==='daily') {
+        const [h,m]=c.value.split(':').map(Number);
+        next=new Date(now); next.setHours(h,m,0,0);
+        if (next<=now) next.setDate(next.getDate()+1);
+      } else if (c.type==='weekly') {
+        const daysMap={'日':0,'月':1,'火':2,'水':3,'木':4,'金':5,'土':6};
+        const targetDows=c.value.map(d=>daysMap[d]);
+        let minDiff=Infinity;
+        targetDows.forEach(dow=>{ let diff=(dow-now.getDay()+7)%7; if(diff===0) diff=7; if(diff<minDiff) minDiff=diff; });
+        next=new Date(now); next.setDate(now.getDate()+minDiff); next.setHours(0,0,0,0);
+      } else if (c.type==='monthly') {
+        const day=parseInt(c.value);
+        next=new Date(now.getFullYear(),now.getMonth(),day,0,0,0,0);
+        if (next<=now) next.setMonth(next.getMonth()+1);
+      }
+      const delay=next-now; c._timer=setTimeout(()=>{ if (![...todoList.children].some(li=>li.querySelector('.task-text').textContent===c.name)) { const li=createTaskItem(c.name); todoList.appendChild(li); scheduleAutoDelete(li); } scheduleConfig(c); },delay);
+    }
+  </script>
+</body>
+</html>
